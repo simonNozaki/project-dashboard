@@ -1,0 +1,31 @@
+{
+  "name": "package-dashboard",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "tauri": "tauri",
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^1.5.1",
+    "vue-material-design-icons": "^5.2.0"
+  },
+  "devDependencies": {
+    "@nuxt/devtools": "latest",
+    "@tauri-apps/cli": "^1.5.6",
+    "autoprefixer": "^10.4.16",
+    "nuxt": "^3.8.2",
+    "nuxt-icon": "^0.6.7",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.3.6",
+    "typescript": "^5.0.2",
+    "vite": "^4.4.4",
+    "vue": "^3.3.10",
+    "vue-router": "^4.2.5"
+  }
+}
