@@ -2,11 +2,13 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use ferris_says::say;
+use log::{error, LevelFilter, debug};
 use tokio::io::AsyncBufReadExt;
 use std::io::{stdout, BufWriter, Read};
 use std::fs::File;
 use std::process::{Stdio, ExitStatus};
 use tauri::Window;
+use tauri_plugin_log::LogTarget;
 use tokio::process::Command;
 use tokio::io::BufReader;
 use package_dashboard::foundations::package_json::{ProjectMeta, to_project_meta};
@@ -18,8 +20,7 @@ use package_dashboard::foundations::package_json::{ProjectMeta, to_project_meta}
 /// 指定されたディレクトリ直下に `package.json` がないとき、Errorを返す
 #[tauri::command]
 fn set_npm_project(dir: &str) -> Result<ProjectMeta, String> {
-    // FIXME: 動作安定したら消す(デバッグコード)
-    println!("Directory: {}", dir);
+    debug!("Directory: {}", dir);
     let package_json = format!("{}/package.json", dir);
 
     // ファイルを読み出してバッファに書き込み -> JSONをパースしてプロジェクト名を取り出す
@@ -63,8 +64,11 @@ async fn execute_async(current_dir: &str, script: &str, window: Window) -> Resul
         .spawn();
     let mut child = match yarn {
         Ok(c) => c,
-        // TODO: 同じメッセージでロギング
-        Err(e) => return Err(format!("Error spawning a process: {}", e))
+        Err(e) => {
+            let message = format!("Error spawning a process: {}", e);
+            error!("{}", &message);
+            return Err(message)
+        }
     };
     let stdout = child.stdout.take().expect("");
     let reader = BufReader::new(stdout);
@@ -75,7 +79,7 @@ async fn execute_async(current_dir: &str, script: &str, window: Window) -> Resul
     while let Ok(next) = lines.next_line().await {
         match next {
             Some(line) => {
-                println!("[debug] {}", &line);
+                debug!("{}", &line);
                 result.push_str(&line);
                 result.push_str("\n");
                 window.emit("on-print-stdout", Payload { text: result.to_owned() }).unwrap();
@@ -86,7 +90,11 @@ async fn execute_async(current_dir: &str, script: &str, window: Window) -> Resul
 
     match child.wait().await {
         Ok(status) => Ok(SerializableStatus::from(status)),
-        Err(e) => Err(format!("Error on stopping a process: {}", e))
+        Err(e) => {
+            let message = format!("Error on stopping a process: {}", e);
+            error!("{}", &message);
+            Err(message)
+        }
     }
 }
 
@@ -96,6 +104,13 @@ fn main() {
     say(text, 24, writer).unwrap();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_log::Builder::default().targets([
+            LogTarget::LogDir,
+            LogTarget::Stdout,
+            LogTarget::Webview,
+        ])
+        .level(LevelFilter::Debug) // FIXME: 起動時にdebugログ出すか指定できるようにする
+        .build())
         .invoke_handler(tauri::generate_handler![
             set_npm_project,
             execute_async

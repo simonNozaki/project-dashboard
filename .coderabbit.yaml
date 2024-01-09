@@ -1,0 +1,26 @@
+---
+language: "ja"
+early_access: false
+reviews:
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  path_instructions:
+    - path: "**/*.rs"
+      instructions: "|
+        レビュー対象は主に、初級から中級のRust開発者を想定し、一般的なRustにおける実装のベストプラクティスをもとにレビューをしてください。
+        コードフォーマット、スタイルに始まりエラーハンドリングやロギングなど幅広いトピックについてコメントをしてください。
+      "
+  auto_review:
+    enabled: true
+    ignore_title_keywords:
+      - "WIP"
+      - "DO NOT MERGE"
+    drafts: false
+    base_branches:
+      - "develop"
+      - "feat/*"
+chat:
+    auto_reply: true
