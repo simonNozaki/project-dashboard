@@ -63,7 +63,8 @@ async fn execute_async(current_dir: &str, script: &str, window: Window) -> Resul
         .spawn();
     let mut child = match yarn {
         Ok(c) => c,
-        Err(_) => return Err("$error_cannot_spawn_process".to_string())
+        // TODO: 同じメッセージでロギング
+        Err(e) => return Err(format!("Error spawning a process: {}", e))
     };
     let stdout = child.stdout.take().expect("");
     let reader = BufReader::new(stdout);
@@ -85,7 +86,7 @@ async fn execute_async(current_dir: &str, script: &str, window: Window) -> Resul
 
     match child.wait().await {
         Ok(status) => Ok(SerializableStatus::from(status)),
-        Err(_) => Err("$error_process_stop_failed".to_string())
+        Err(e) => Err(format!("Error on stopping a process: {}", e))
     }
 }
 
