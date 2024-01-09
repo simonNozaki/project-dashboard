@@ -62,8 +62,13 @@ function resetProjectMeta() {
   projectName.value = defaultProjectName
   dir.value = ''
   scripts.value = {}
-  alert.value = undefined
   isNpmProject.value = false
+  stdout.value = ''
+
+  alert.value = {
+    status: 'success',
+    message: 'npmプロジェクトをクリアしました'
+  }
 }
 
 const dirUpdated = computed<string>({
