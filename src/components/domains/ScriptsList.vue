@@ -15,14 +15,33 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<Emit>()
 
+// コマンド:終了ステータスのハッシュマップ
+// コマンド実行のたびにコマンドと終了ステータスを更新する
+const exitStatuses = ref<Record<string, number>>({})
+
 async function executeScript(command: string) {
   // コマンド実行前に標準出力をクリアしておく
   emit('execute', '')
   await listen<{ text: string }>('on-print-stdout', (event) => {
-    console.log(event.payload.text)
     emit('execute', event.payload.text)
   })
-  await invoke('execute_script', { currentDir: props.currentDir, script: command })
+
+  try {
+    const result: { code: number } = await invoke('execute_async', { currentDir: props.currentDir, script: command })
+    exitStatuses.value[command] = result.code
+  } catch (e) {
+    exitStatuses.value[command] = 1
+  }
+}
+
+function toIcon(code: number): { name: string, color: string } {
+  return code === 0 ? {
+    name: 'mdi:check',
+    color: '#22C55E'
+  } : {
+    name: 'mdi:alert-circle-outline',
+    color: '#EF4444'
+  }
 }
 </script>
 
@@ -33,6 +52,14 @@ async function executeScript(command: string) {
         <div class="card" @click="executeScript(command)">
           <p class="card__title">{{ command }}</p>
           <p class="card__script">{{ script }}</p>
+          <template v-if="exitStatuses[command] != undefined">
+            <div class="card__status">
+              <Icon
+                :name="toIcon(exitStatuses[command]).name"
+                :color="toIcon(exitStatuses[command]).color"
+                />
+            </div>
+          </template>
         </div>
       </li>
     </template>
@@ -50,5 +77,9 @@ async function executeScript(command: string) {
 
 .card__script {
   @apply ml-5;
+}
+
+.card__status {
+  @apply text-right;
 }
 </style>

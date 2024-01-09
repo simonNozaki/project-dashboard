@@ -2,10 +2,13 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use ferris_says::say;
-use std::io::{stdout, BufWriter, Read, BufRead};
+use tokio::io::AsyncBufReadExt;
+use std::io::{stdout, BufWriter, Read};
 use std::fs::File;
-use std::process::Stdio;
+use std::process::{Stdio, ExitStatus};
 use tauri::Window;
+use tokio::process::Command;
+use tokio::io::BufReader;
 use package_dashboard::foundations::package_json::{ProjectMeta, to_project_meta};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -29,10 +32,6 @@ fn set_npm_project(dir: &str) -> Result<ProjectMeta, String> {
     }
 
     let (name, scripts) = to_project_meta(buffer);
-    for (k, v) in &scripts {
-        // デバッグコードだが標準出力にはでて困るものでもないので残す
-        println!("{}, {}", k, v);
-    }
     Ok(ProjectMeta { name, scripts })
 }
 
@@ -44,44 +43,51 @@ struct Payload {
 
 // the payload type must implement `Serialize` and `Clone`.
 #[derive(Clone, serde::Serialize)]
-enum ExecutionStatus {
-    Failed
+struct SerializableStatus {
+    code: Option<i32>
+}
+
+impl From<ExitStatus> for SerializableStatus {
+    fn from(value: ExitStatus) -> Self {
+        SerializableStatus { code: value.code() }
+    }
 }
 
 /// package.jsonから読み込んだnpmスクリプトを実行し、結果をEventとして逐次emitする
 #[tauri::command]
-fn execute_script(current_dir: &str, script: &str, window: Window) -> Result<(), ExecutionStatus> {
-    println!("Window: {}", window.label());
-    let yarn = std::process::Command::new("yarn")
+async fn execute_async(current_dir: &str, script: &str, window: Window) -> Result<SerializableStatus, String> {
+    let yarn = Command::new("yarn")
         .current_dir(current_dir)
         .arg(script)
         .stdout(Stdio::piped())
         .spawn();
-    let stdout = if let Ok(v) = yarn {
-        v.stdout
-    } else {
-        println!("[error] {}", yarn.unwrap_err());
-        return Err(ExecutionStatus::Failed);
+    let mut child = match yarn {
+        Ok(c) => c,
+        // TODO: 同じメッセージでロギング
+        Err(e) => return Err(format!("Error spawning a process: {}", e))
     };
-    let child_stdout = match stdout {
-        Some(v) => v,
-        None => {
-            println!("Error on unwrapping an error.");
-            return Err(ExecutionStatus::Failed);
-        }
-    };
-    let reader = std::io::BufReader::new(child_stdout);
+    let stdout = child.stdout.take().expect("");
+    let reader = BufReader::new(stdout);
+    let lines = reader.lines();
+    tokio::pin!(lines);
+
     let mut result = String::from("");
-    for line in reader.lines() {
-        if let Ok(l) = line {
-            println!("[debug] {}", &l);
-            result.push_str(&l);
-            result.push_str("\n");
-            window.emit("on-print-stdout", Payload { text: result.to_owned() }).unwrap();
+    while let Ok(next) = lines.next_line().await {
+        match next {
+            Some(line) => {
+                println!("[debug] {}", &line);
+                result.push_str(&line);
+                result.push_str("\n");
+                window.emit("on-print-stdout", Payload { text: result.to_owned() }).unwrap();
+            },
+            None => break
         }
     }
 
-    Ok(())
+    match child.wait().await {
+        Ok(status) => Ok(SerializableStatus::from(status)),
+        Err(e) => Err(format!("Error on stopping a process: {}", e))
+    }
 }
 
 fn main() {
@@ -92,7 +98,7 @@ fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             set_npm_project,
-            execute_script
+            execute_async
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
