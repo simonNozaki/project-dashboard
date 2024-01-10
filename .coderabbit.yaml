@@ -23,4 +23,4 @@ reviews:
       - "develop"
       - "feat/*"
 chat:
-    auto_reply: true
+  auto_reply: true
