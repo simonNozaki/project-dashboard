@@ -3,6 +3,7 @@ name: auto-test
 on:
   pull_request:
     types: [opened]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -19,7 +20,7 @@ jobs:
           cache: yarn
           node-version: 18
       - name: installation
-        working-directory: ./src
+        working-directory: src
         run: yarn install --frozen-lockfile
 
   auto_test_backend:
@@ -28,5 +29,5 @@ jobs:
     steps:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: test
-        working-directory: ./src-tauri
+        working-directory: src-tauri
         run: cargo test
