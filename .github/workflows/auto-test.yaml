@@ -1,0 +1,32 @@
+name: auto-test
+
+on:
+  pull_request:
+    types: [opened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  setup_node:
+    name: 'Setup: node.js'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          cache: yarn
+          node-version: 18
+      - name: installation
+        working-directory: ./src
+        run: yarn install --frozen-lockfile
+
+  auto_test_backend:
+    name: 'Unit tests: Backend'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: test
+        working-directory: ./src-tauri
+        run: cargo test
