@@ -2,16 +2,16 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use ferris_says::say;
-use log::{error, LevelFilter, debug};
-use tokio::io::AsyncBufReadExt;
-use std::io::{stdout, BufWriter, Read};
+use log::{debug, error, LevelFilter};
+use package_dashboard::foundations::package_json::{to_project_meta, ProjectMeta};
 use std::fs::File;
-use std::process::{Stdio, ExitStatus};
+use std::io::{stdout, BufWriter, Read};
+use std::process::{ExitStatus, Stdio};
 use tauri::Window;
 use tauri_plugin_log::LogTarget;
-use tokio::process::Command;
+use tokio::io::AsyncBufReadExt;
 use tokio::io::BufReader;
-use package_dashboard::foundations::package_json::{ProjectMeta, to_project_meta};
+use tokio::process::Command;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 
@@ -39,13 +39,13 @@ fn set_npm_project(dir: &str) -> Result<ProjectMeta, String> {
 // the payload type must implement `Serialize` and `Clone`.
 #[derive(Clone, serde::Serialize)]
 struct Payload {
-    text: String
+    text: String,
 }
 
 // the payload type must implement `Serialize` and `Clone`.
 #[derive(Clone, serde::Serialize)]
 struct SerializableStatus {
-    code: Option<i32>
+    code: Option<i32>,
 }
 
 impl From<ExitStatus> for SerializableStatus {
@@ -56,7 +56,11 @@ impl From<ExitStatus> for SerializableStatus {
 
 /// package.jsonから読み込んだnpmスクリプトを実行し、結果をEventとして逐次emitする
 #[tauri::command]
-async fn execute_async(current_dir: &str, script: &str, window: Window) -> Result<SerializableStatus, String> {
+async fn execute_async(
+    current_dir: &str,
+    script: &str,
+    window: Window,
+) -> Result<SerializableStatus, String> {
     let yarn = Command::new("yarn")
         .current_dir(current_dir)
         .arg(script)
@@ -67,7 +71,7 @@ async fn execute_async(current_dir: &str, script: &str, window: Window) -> Resul
         Err(e) => {
             let message = format!("Error spawning a process: {}", e);
             error!("{}", &message);
-            return Err(message)
+            return Err(message);
         }
     };
     let stdout = child.stdout.take().expect("");
@@ -82,9 +86,16 @@ async fn execute_async(current_dir: &str, script: &str, window: Window) -> Resul
                 debug!("{}", &line);
                 result.push_str(&line);
                 result.push_str("\n");
-                window.emit("on-print-stdout", Payload { text: result.to_owned() }).unwrap();
-            },
-            None => break
+                window
+                    .emit(
+                        "on-print-stdout",
+                        Payload {
+                            text: result.to_owned(),
+                        },
+                    )
+                    .unwrap();
+            }
+            None => break,
         }
     }
 
@@ -104,17 +115,13 @@ fn main() {
     say(text, 24, writer).unwrap();
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_log::Builder::default().targets([
-            LogTarget::LogDir,
-            LogTarget::Stdout,
-            LogTarget::Webview,
-        ])
-        .level(LevelFilter::Debug) // FIXME: 起動時にdebugログ出すか指定できるようにする
-        .build())
-        .invoke_handler(tauri::generate_handler![
-            set_npm_project,
-            execute_async
-        ])
+        .plugin(
+            tauri_plugin_log::Builder::default()
+                .targets([LogTarget::LogDir, LogTarget::Stdout, LogTarget::Webview])
+                .level(LevelFilter::Debug) // FIXME: 起動時にdebugログ出すか指定できるようにする
+                .build(),
+        )
+        .invoke_handler(tauri::generate_handler![set_npm_project, execute_async])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

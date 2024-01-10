@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use serde_json::Value;
+use std::collections::HashMap;
 
 const DEFAULT_PROJECT_NAME: &str = "無題のプロジェクト";
 
@@ -8,17 +8,18 @@ const DEFAULT_PROJECT_NAME: &str = "無題のプロジェクト";
 #[derive(Clone, serde::Serialize)]
 pub struct ProjectMeta {
     pub name: String,
-    pub scripts: HashMap<String, String>
+    pub scripts: HashMap<String, String>,
 }
 
 /// package.jsonのバッファ領域を読み込んでプロジェクト名とnpmスクリプトのタプルを抽出する
 pub fn to_project_meta(file_buffer: String) -> (String, HashMap<String, String>) {
     let maybe_json: Result<Value, serde_json::Error> = serde_json::from_str(&file_buffer);
-    let default_result: (String, HashMap<String, String>) = (DEFAULT_PROJECT_NAME.to_string(), HashMap::new());
+    let default_result: (String, HashMap<String, String>) =
+        (DEFAULT_PROJECT_NAME.to_string(), HashMap::new());
 
     let json_values = match maybe_json {
         Ok(v) => v,
-        Err(_) => { return default_result; }
+        Err(_) => return default_result,
     };
 
     let name = if let Value::String(s) = &json_values["name"] {
