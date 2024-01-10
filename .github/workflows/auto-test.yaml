@@ -3,6 +3,7 @@ name: auto-test
 on:
   pull_request:
     types: [opened]
+  workflow_dispatch:
 
 permissions:
   contents: write
