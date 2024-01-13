@@ -24,7 +24,7 @@ fn set_npm_project(dir: &str) -> Result<ProjectMeta, String> {
     let package_json = format!("{}/package.json", dir);
 
     // ファイルを読み出してバッファに書き込み -> JSONをパースしてプロジェクト名を取り出す
-    let file = File::open(&package_json);
+    let file = File::open(package_json);
     let mut buffer = String::from("");
     if let Ok(mut f) = file {
         let _ = f.read_to_string(&mut buffer);
@@ -85,7 +85,7 @@ async fn execute_async(
             Some(line) => {
                 debug!("{}", &line);
                 result.push_str(&line);
-                result.push_str("\n");
+                result.push('\n');
                 window
                     .emit(
                         "on-print-stdout",
