@@ -24,10 +24,4 @@ $ yarn tauri dev
 
 # プロジェクトステータス
 
-TODO
-
-- [ ] 止めるボタンの実装(ctrl + cの挙動を入れたい)
-- [ ] yarn以外のパッケージマネージャへの対応
-- [ ] ファイルパス選択の簡略化
-- [x] 連打防止
-- [ ] ユニットテスト書く
+[package-dashboard-dev](https://github.com/users/simonNozaki/projects/1) にて追跡。
