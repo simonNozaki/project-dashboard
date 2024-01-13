@@ -8,7 +8,7 @@ mod package_json_test {
         let (name, scripts) = to_project_meta(raw);
 
         assert_eq!(name, "無題のプロジェクト");
-        assert_eq!(scripts.is_empty(), true);
+        assert!(scripts.is_empty());
     }
 
     #[test]

@@ -22,6 +22,15 @@ npmのプロジェクトディレクトリを指定すると、npmスクリプ�
 $ yarn tauri dev
 ```
 
+### dist
+
+Clippyで静的解析をするときに、 `dist`がないと
+
+```sh
+RUSTFLAGS=-Dwarnings cargo clippy --all-targets --all-features
+```
+
+
 # プロジェクトステータス
 
 [package-dashboard-dev](https://github.com/users/simonNozaki/projects/1) にて追跡。
