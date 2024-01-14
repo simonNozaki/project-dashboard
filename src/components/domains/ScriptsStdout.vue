@@ -37,7 +37,7 @@ function toLines(text: string): string[] {
 
 <style>
 .scripts__stdout {
-  @apply bg-[#002451] flex-1 ml-8 rounded w-full overflow-y-scroll;
+  @apply bg-blue-tomorrow-night flex-1 ml-8 rounded w-full overflow-y-scroll;
 }
 
 .scripts__stdout_text {
