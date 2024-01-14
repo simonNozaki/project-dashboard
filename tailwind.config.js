@@ -1,3 +1,7 @@
+const { resolve } = require('path')
+const colorsPath = resolve(__dirname, 'src/styles/colors.ts')
+const colors = require(colorsPath)
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -9,7 +13,9 @@ export default {
     "./app.vue",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors
+    },
   },
   plugins: [],
 }

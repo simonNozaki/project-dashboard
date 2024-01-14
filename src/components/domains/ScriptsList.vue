@@ -41,7 +41,10 @@ async function executeScript(command: string) {
   isExecuting.value = false
 }
 
-function toIcon(code: number): { name: string, color: string } {
+/**
+ * 終了コードから表示するアイコンを解決する
+ */
+function resolveIcon(code: number): { name: string, color: string } {
   return code === 0 ? {
     name: 'mdi:check',
     color: '#22C55E'
@@ -54,6 +57,11 @@ function toIcon(code: number): { name: string, color: string } {
 const classes = computed(() => ({
   'card__button--disabled': isExecuting.value
 }))
+
+watch(props.scripts, () => {
+  // 別のプロジェクトが読み込まれたらステータスを初期化し直し
+  exitStatuses.value = {}
+})
 </script>
 
 <template>
@@ -71,8 +79,8 @@ const classes = computed(() => ({
             <template v-if="exitStatuses[command] != undefined">
               <div class="card__status">
                 <Icon
-                  :name="toIcon(exitStatuses[command]).name"
-                  :color="toIcon(exitStatuses[command]).color"
+                  :name="resolveIcon(exitStatuses[command]).name"
+                  :color="resolveIcon(exitStatuses[command]).color"
                   />
               </div>
             </template>
@@ -85,7 +93,7 @@ const classes = computed(() => ({
 
 <style>
 .card {
-  @apply bg-[#eeeeee] rounded mb-2 hover:bg-[#dddddd] hover:cursor-pointer;
+  @apply bg-gray-1 rounded mb-2 hover:bg-gray-2 hover:cursor-pointer;
 }
 
 .card__button {
@@ -93,7 +101,7 @@ const classes = computed(() => ({
 }
 
 .card__button--disabled {
-  @apply bg-[#dddddd] text-[#666666];
+  @apply bg-gray-2 text-gray-3;
 }
 
 .card__title {

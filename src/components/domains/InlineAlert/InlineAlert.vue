@@ -38,6 +38,6 @@ const iconColor = computed(() => iconColors[props.alert.status])
 }
 
 .header__alert_text {
-  @apply text-[#666666] text-sm;
+  @apply text-gray-3 text-sm;
 }
 </style>
