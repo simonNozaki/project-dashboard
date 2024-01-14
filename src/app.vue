@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { invoke } from '@tauri-apps/api'
 import type { InlineAlert } from '~/components/domains/InlineAlert/privates/alert';
+import { open } from '@tauri-apps/api/dialog';
 
 const defaultProjectName = '無題のプロジェクト'
 const projectName = ref(defaultProjectName)
@@ -82,6 +83,16 @@ const dirUpdated = computed<string>({
     }
   }
 })
+
+async function getDirBySelect() {
+  const directoryPath = await open({
+    directory: true,
+    multiple: false
+  })
+  if (directoryPath && typeof directoryPath === 'string') {
+    dirUpdated.value = directoryPath
+  }
+}
 </script>
 
 <template>
@@ -98,11 +109,16 @@ const dirUpdated = computed<string>({
       </button>
     </template>
     <template v-else>
-      <TextInput
-        class="header__project_dir"
-        :model-value="dir"
-        placeholder="npmプロジェクトを入力..."
-        @update:model-value="dirUpdated = $event" />
+      <div class="header__project_dir">
+        <Button @click="getDirBySelect">
+          ディレクトリを選択
+        </Button>
+        <TextInput
+          class="header__directory_input"
+          :model-value="dir"
+          placeholder="npmプロジェクトを直接入力..."
+          @update:model-value="dirUpdated = $event" />
+      </div>
     </template>
     <template v-if="alert">
       <InlineAlert :alert="alert" />
@@ -127,7 +143,11 @@ const dirUpdated = computed<string>({
 }
 
 .header__project_dir {
-  @apply w-full mt-2;
+  @apply mt-2 flex flex-row;
+}
+
+.header__directory_input {
+  @apply ml-2 flex grow;
 }
 
 .header__project_dir_button {
