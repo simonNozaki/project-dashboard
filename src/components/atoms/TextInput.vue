@@ -29,6 +29,6 @@ const value = computed({
 
 <style scoped>
 input {
-  @apply p-2 rounded bg-[#eeeeee];
+  @apply p-2 rounded border-[#273c75] border;
 }
 </style>
