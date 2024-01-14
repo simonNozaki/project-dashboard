@@ -79,18 +79,22 @@ const dirUpdated = computed<string>({
     if (dir.value === '') {
       resetProjectMeta()
     } else {
-      updateProjectMeta(dir.value)
+      await updateProjectMeta(dir.value)
     }
   }
 })
 
 async function getDirBySelect() {
-  const directoryPath = await open({
-    directory: true,
-    multiple: false
-  })
-  if (directoryPath && typeof directoryPath === 'string') {
-    dirUpdated.value = directoryPath
+  try {
+    const directoryPath = await open({
+      directory: true,
+      multiple: false
+    })
+    if (directoryPath && typeof directoryPath === 'string') {
+      dirUpdated.value = directoryPath
+    }
+  } catch (e) {
+    alert.value = { status: 'error', message: 'ディレクトリの選択に失敗しました' }
   }
 }
 </script>
